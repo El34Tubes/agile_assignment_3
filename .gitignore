@@ -1,0 +1,4 @@
+.claude/
+*.bat
+__pycache__/
+*.pyc
