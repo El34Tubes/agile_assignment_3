@@ -509,21 +509,113 @@ for (col_title, col_color, items), cx in zip(cols, xs):
         tb(sl, f"→  {item}", cx + 0.1, iy + 0.08, col_w - 0.2, 0.50, sz=10, color=TEXT)
 solid_rect(sl, 0, 7.45, 13.33, 0.05, ACCENT)
 
+# ════════════════════════════════════════════════════════════════════
+# SLIDE 11 — CONTENT MAP (OPTIONAL EXTRA CREDIT)
+# ════════════════════════════════════════════════════════════════════
+sl = prs.slides.add_slide(blank); set_bg(sl)
+solid_rect(sl, 0, 0, 13.33, 0.05, ACCENT)
+
+tb(sl, "CONTENT MAP", 0.5, 0.12, 4.0, 0.30, sz=9, bold=True, color=DIM)
+hdiv(sl, 0.5, 0.48, 12.33)
+tb(sl, "Birch Wilson Digital Experience  ·  Data & Content Categories by Site Section",
+   0.5, 0.54, 12.33, 0.38, sz=15, bold=True, color=TEXT)
+
+# ── Mind map constants ────────────────────────────────────────────────
+CN_X, CN_W, CN_H = 0.25, 1.55, 0.50   # center node
+BN_X, BN_W, BN_H = 2.15, 1.60, 0.42  # branch nodes
+TRUNK_X = 2.07                          # main trunk x
+L1_X,  L1_W  = 4.05, 2.40             # leaf level 1
+L1_TX        = 3.97                    # leaf 1 sub-trunk
+L2_X,  L2_W  = 6.75, 2.20             # sub-leaves (level 2)
+L2_TX        = 6.67
+L_H,   L_GAP = 0.36, 0.06             # leaf height & gap
+LN_C = RGBColor(0xB8, 0xC5, 0xD3)     # soft blue-gray line color
+
+branch_cys = [1.15, 2.47, 3.79, 5.11, 6.43]
+CENTER_CY   = 3.79
+
+# ── Drawing helpers ───────────────────────────────────────────────────
+def hln(y, x1, x2, c=None):
+    solid_rect(sl, min(x1, x2), y - 0.012, abs(x2 - x1) + 0.015, 0.022,
+               fill=c or LN_C)
+
+def vln(x, y1, y2, c=None):
+    solid_rect(sl, x - 0.012, min(y1, y2), 0.022, abs(y2 - y1) + 0.015,
+               fill=c or LN_C)
+
+# ── Center node ───────────────────────────────────────────────────────
+round_rect(sl, CN_X, CENTER_CY - CN_H / 2, CN_W, CN_H, fill=TEXT, border=TEXT)
+tb(sl, "BIRCH\nWILSON", CN_X, CENTER_CY - CN_H / 2, CN_W, CN_H,
+   sz=10, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+
+# Main trunk: vertical spine + horizontal arm to center node
+vln(TRUNK_X, branch_cys[0], branch_cys[-1])
+hln(CENTER_CY, CN_X + CN_W, TRUNK_X)
+
+# ── Branch & leaf data ────────────────────────────────────────────────
+# Each entry: (name, color, [leaves], {leaf_index: [sub-leaves] or None})
+BRANCHES = [
+    ('Artist',  DAN_C,
+     ['Bio & Origin Story', 'Genre & Influences', 'Band Member Info'],
+     {}),
+    ('Music',   ACCENT,
+     ['Spotify Tracks', 'Track Metadata', 'Live Footage'],
+     {0: ['Song Playlist', 'Embed Player']}),
+    ('Blog',    DAN_C,
+     ['Published Posts', 'Fan Contributions', 'Submission Guidelines'],
+     {1: ['Submission Form', 'Published Article']}),
+    ('Shows',   JAKE_C,
+     ['Show Details', 'Ticket Inventory', 'Live Photography'],
+     {0: ['Date', 'Venue & City']}),
+    ('Contact', ACCENT,
+     ['Inquiry Form Fields', 'Confirmation Templates', 'Email Notifications'],
+     {2: ['Welcome Email', 'Show Alerts']}),
+]
+
+for (name, color, leaves, sub_map), cy in zip(BRANCHES, branch_cys):
+    # Trunk → branch
+    hln(cy, TRUNK_X, BN_X, color)
+    round_rect(sl, BN_X, cy - BN_H / 2, BN_W, BN_H, fill=color, border=color)
+    tb(sl, name, BN_X, cy - BN_H / 2, BN_W, BN_H,
+       sz=9, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+
+    # Leaf positions (centered on branch cy)
+    n         = len(leaves)
+    total_h   = n * L_H + (n - 1) * L_GAP
+    leaf_cys  = [cy - total_h / 2 + L_H / 2 + i * (L_H + L_GAP) for i in range(n)]
+
+    vln(L1_TX, leaf_cys[0], leaf_cys[-1], color)
+    hln(cy, BN_X + BN_W, L1_TX, color)
+
+    for i, (lc, label) in enumerate(zip(leaf_cys, leaves)):
+        hln(lc, L1_TX, L1_X, color)
+        ly = lc - L_H / 2
+        round_rect(sl, L1_X, ly, L1_W, L_H, fill=STEP_BG, border=color, bw=Pt(0.75))
+        tb(sl, label, L1_X + 0.10, ly + 0.04, L1_W - 0.20, L_H - 0.08, sz=8, color=TEXT)
+
+        # Sub-leaves (level 2)
+        subs = sub_map.get(i)
+        if subs:
+            ns       = len(subs)
+            sub_tot  = ns * L_H + (ns - 1) * L_GAP
+            sub_cys  = [lc - sub_tot / 2 + L_H / 2 + j * (L_H + L_GAP) for j in range(ns)]
+
+            vln(L2_TX, sub_cys[0], sub_cys[-1], color)
+            hln(lc, L1_X + L1_W, L2_TX, color)
+
+            for sc, slabel in zip(sub_cys, subs):
+                hln(sc, L2_TX, L2_X, color)
+                sy = sc - L_H / 2
+                round_rect(sl, L2_X, sy, L2_W, L_H,
+                           fill=ACT_BG, border=color, bw=Pt(0.75))
+                tb(sl, slabel, L2_X + 0.10, sy + 0.04, L2_W - 0.20, L_H - 0.08,
+                   sz=8, color=DIM)
+
+solid_rect(sl, 0, 7.45, 13.33, 0.05, ACCENT)
+
 # ── Save ─────────────────────────────────────────────────────────────
 import os
-out = r"c:\Users\lacro\OneDrive\Desktop\BU\agile\LacroixJohn_Assignment3_BirchWilson.pptx"
-pdf = out.replace(".pptx", ".pdf")
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                   "LacroixJohn_Assignment3_BirchWilson.pptx")
 prs.save(out)
 print(f"Saved: {out}")
-
-# ── Export PDF via PowerPoint COM ─────────────────────────────────────
-try:
-    import win32com.client
-    app  = win32com.client.Dispatch("PowerPoint.Application")
-    deck = app.Presentations.Open(os.path.abspath(out), WithWindow=False)
-    deck.SaveAs(os.path.abspath(pdf), 32)   # 32 = ppSaveAsPDF
-    deck.Close()
-    app.Quit()
-    print(f"PDF:   {pdf}")
-except Exception as e:
-    print(f"PDF failed: {e}")
